@@ -15,7 +15,7 @@ def get_revisions_from_web(json_dump=[]):
     params = {
         'action':'query',
         'prop':'revisions',
-        'titles':'Talk:Boston Marathon bombing',
+        'titles':'Talk:November 2015 Paris attacks',
         'rvprop':'ids|timestamp|comment|user|sha1|content',
         'rvlimit':RVLIMIT,
         'rvdiffto':'prev',
@@ -25,7 +25,7 @@ def get_revisions_from_web(json_dump=[]):
     lastContinue = None
     while True:
         if lastContinue:
-            params.update(lastContinue)
+            params.update({'rvcontinue':lastContinue})
         r = requests.get(base_url, params=params).json()
         if 'error' in r:
             print(r['error'])
@@ -40,9 +40,9 @@ def get_revisions_from_web(json_dump=[]):
             })
             #df = df.append(traverse_query(r['query']['categorymembers']))
             #utils.log('processed {0} bot names'.format(len(df)))
-        if 'rvcontinue' not in r:
+        if 'continue' not in r:
             return json_dump
-        lastContinue = r['rvcontinue']
+        lastContinue = r['continue']['rvcontinue']
 
 def create_json_dump_from_web(outfile_path,infile_path=None):
     if not infile_path:
