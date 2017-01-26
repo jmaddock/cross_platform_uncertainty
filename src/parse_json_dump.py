@@ -6,8 +6,29 @@ import json
 import pandas as pd
 from bs4 import BeautifulSoup
 import mwparserfromhell as mw
+import abc
 
-def traverse_query(query):
+'''
+class Revision_Parser(object):
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self,json_dump_list):
+        self.json_dump_list = json_dump_list
+        self.result_df
+    
+    @abc.abstractmethod
+    def traverse_query(self,query):
+        return
+
+    @abc.abstractmethod
+    def process_dump(self,infile,outfile):
+        
+
+class Wiki_Revision_Parser(Revision_Parser):
+'''
+
+## WIKIPEDIA SPECIFIC METHODS
+def traverse_wiki_query(query):
     df = pd.DataFrame()
     title = query['title']
     page_id = query['pageid']
@@ -21,11 +42,8 @@ def traverse_query(query):
             user = rev['user']
         else:
             user = ''
-        if 'diff' in rev:
-            if 'from' in rev['diff']:
-                text = parse_revision_xml(rev['diff']['*'])
-            else:
-                text = rev['*']
+        if 'diff' in rev and '*' in rev['diff']:
+            text = parse_revision_xml(rev['diff']['*'])
             stripped_text = strip_wikicode(text)
         else:
             text = ''
@@ -44,6 +62,7 @@ def traverse_query(query):
         }]))
     return df
 
+## strip all wikicode templates from a wikipedia edit
 def strip_wikicode(text):
     # get all wikicode templates
     template_list = mw.parse(text).filter_templates()
@@ -57,6 +76,8 @@ def strip_wikicode(text):
     stripped_text = ' {0}'.format(stripped_text.strip('\n'))
     return stripped_text
 
+## find diff xml tags from wikipedia dump
+## return the diff between 2 edits
 def parse_revision_xml(xml):
     diff_text = ''
     parsed_xml = BeautifulSoup(xml,'html.parser')
@@ -64,6 +85,50 @@ def parse_revision_xml(xml):
     for line in added_line_list:
         diff_text = '{0}{1}\n'.format(diff_text,line.text)
     return diff_text
+
+## REDDIT SPECIFIC METHODS
+def traverse_reddit_query(query,title):
+    df = pd.DataFrame()
+    title = title
+    page_id = title
+    rev_id = query['data']['id']
+    try:
+        ts = pd.to_datetime(query['data']['created_utc'],unit='s')
+    except:
+        print(query)
+        sys.exit(0)
+    user = query['data']['author']
+    text = query['data']['body']
+    url_list = []
+    if len(query['data']['embeds']) > 0:
+        for embed in query['data']['embeds']:
+            if embed['url']:
+                url_list.append(embed['url'])
+    df = df.append(pd.DataFrame([{
+        'title':title,
+        'page_id':page_id,
+        'rev_id':rev_id,
+        'ts':ts,
+        'user':user,
+        'text':text,
+        'url_list':url_list
+    }]))
+    return df
+
+## load a single wikipedia or reddit dump from a .json file
+def load_from_json(infile_path):
+    try:
+        infile = open(infile_path,'r')
+        json_dump = json.load(infile)
+    except json.decoder.JSONDecodeError:
+        infile.close()
+        infile = open(infile_path,'r')
+        json_dump = []
+        for line in infile:
+            json_line = json.loads(line)
+            json_dump.append(json_line)
+    infile.close()
+    return json_dump
 
 def main():
     description = 'parse a json dump containing the revision history of a wikipage and return a csv of diffs for coding'
@@ -73,14 +138,21 @@ def main():
                         help='input json dump file path(s)')
     parser.add_argument('-o','--outfile',
                         help='output csv file path')
+    parser.add_argument('-s','--data_source',
+                        choices=['wikipedia','reddit'],
+                        required=True,
+                        nargs=1,
+                        help='the source of the .json dump')
     args = parser.parse_args()
     df = pd.DataFrame()
     for infile_path in args.infile:
-        infile = open(infile_path,'r')
-        json_dump = json.load(infile)
-        infile.close()
+        json_dump = load_from_json(infile_path)
         for query in json_dump:
-            df = df.append(traverse_query(query['query']))
+            if args.data_source[0] == 'wikipedia':
+                df = df.append(traverse_wiki_query(query['query']))
+            else:
+                title=os.path.basename(infile_path).replace('.json','')
+                df = df.append(traverse_reddit_query(query,title=title))
     df.to_csv(args.outfile,na_rep='NaN',encoding='utf-8')
             
 if __name__ == "__main__":

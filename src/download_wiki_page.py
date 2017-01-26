@@ -64,7 +64,7 @@ def get_revisions_from_web(title,json_dump=[]):
                     next_rev = r['query']['pages'][page_id]['revisions'][-1]['diff']['to']
                     rvlimit = 1
                 except KeyError as e:
-                    print(e)
+                    print('KeyError: {0}'.format(e))
                     print(r['query'])
                     rvlimit += 1
                 download_count += 1
@@ -72,7 +72,7 @@ def get_revisions_from_web(title,json_dump=[]):
             if download_count % 100 == 0:
                 print('downloaded {0} revisions'.format(download_count))
             # if no more revision, return output json dump
-            if 'next_rev' == 0:
+            if int(next_rev) == 0:
                 print('query_complete')
                 return json_dump
         # handle keyboardinterrupt exception, return collected data
