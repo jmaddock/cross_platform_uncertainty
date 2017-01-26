@@ -1,1 +1,4 @@
 src/venv
+src/notebooks/
+src/config.py
+__pycache__/

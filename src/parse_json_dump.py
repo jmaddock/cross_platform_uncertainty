@@ -7,25 +7,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 import mwparserfromhell as mw
 import abc
-
-'''
-class Revision_Parser(object):
-    __metaclass__ = abc.ABCMeta
-
-    def __init__(self,json_dump_list):
-        self.json_dump_list = json_dump_list
-        self.result_df
-    
-    @abc.abstractmethod
-    def traverse_query(self,query):
-        return
-
-    @abc.abstractmethod
-    def process_dump(self,infile,outfile):
-        
-
-class Wiki_Revision_Parser(Revision_Parser):
-'''
+import parse_json_dump
 
 ## WIKIPEDIA SPECIFIC METHODS
 def traverse_wiki_query(query):
@@ -100,9 +82,12 @@ def traverse_reddit_query(query,title):
     user = query['data']['author']
     text = query['data']['body']
     url_list = []
+    tweet_text = []
     if len(query['data']['embeds']) > 0:
         for embed in query['data']['embeds']:
             if embed['url']:
+                if 'twitter.com' in embed['url']:
+                   tweet_text.append(twitter_url_expander.expand_url(embed['url'])) 
                 url_list.append(embed['url'])
     df = df.append(pd.DataFrame([{
         'title':title,
@@ -111,7 +96,8 @@ def traverse_reddit_query(query,title):
         'ts':ts,
         'user':user,
         'text':text,
-        'url_list':url_list
+        'url_list':url_list,
+        'tweet_text':tweet_text
     }]))
     return df
 
