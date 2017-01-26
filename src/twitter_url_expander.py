@@ -9,8 +9,8 @@ def get_status_number_from_url(url):
 # query the twitter API based on the status number
 # return tweet text
 def query_api(status):
-    auth = tweepy.OAuthHandler(TWITTER_CONFIG.consumer_key, TWITTER_CONFIG.consumer_secret)
-    auth.set_access_token(TWITTER_CONFIG.access_token, TWITTER_CONFIG.access_token_secret)
+    auth = tweepy.OAuthHandler(TWITTER_CONFIG['consumer_key'], TWITTER_CONFIG['consumer_secret'])
+    auth.set_access_token(TWITTER_CONFIG['access_token'], TWITTER_CONFIG['access_token_secret'])
 
     api = tweepy.API(auth)
     tweet_list = api.statuses_lookup([status])
