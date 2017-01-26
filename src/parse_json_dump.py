@@ -87,7 +87,10 @@ def traverse_reddit_query(query,title):
         for embed in query['data']['embeds']:
             if embed['url']:
                 if 'twitter.com' in embed['url']:
-                   tweet_text.append(twitter_url_expander.expand_url(embed['url'])) 
+                    try:
+                        tweet_text.append(twitter_url_expander.expand_url(embed['url']))
+                    except:
+                        print('twitter url expander failed: {0}'.format(embec['url']))
                 url_list.append(embed['url'])
     df = df.append(pd.DataFrame([{
         'title':title,

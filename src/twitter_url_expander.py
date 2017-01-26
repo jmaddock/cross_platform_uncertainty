@@ -3,8 +3,12 @@ import tweepy
 
 # get the status number from the full url
 def get_status_number_from_url(url):
-    status = url.split('/status/')
-    return status
+    try:
+        status = url.split('/status/')[1]
+        return status
+    except IndexError as e:
+        print('no status ID: {0}'.format(url))
+        return None
 
 # query the twitter API based on the status number
 # return tweet text
@@ -22,7 +26,10 @@ def query_api(status):
 def expand_url(url):
     if 'twitter.com' in url:
         status = get_status_number_from_url(url)
-        text = query_api(status)
-        return text
+        if status:
+            text = query_api(status)
+            return text
+        else:
+            return None
     else:
         return None
