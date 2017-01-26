@@ -7,7 +7,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 import mwparserfromhell as mw
 import abc
-import parse_json_dump
+import twitter_url_expander
 
 ## WIKIPEDIA SPECIFIC METHODS
 def traverse_wiki_query(query):
